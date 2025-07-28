@@ -1,32 +1,31 @@
 import * as React from "react";
-import { TextEditor } from "@/components/TextEditor";
-import { BreadcrumbItem, Document } from "@/types";
-import { router } from "@inertiajs/react";
+import { CollaborativeTextEditor } from "@/components/CollaborativeTextEditor";
+import { ShareDocumentModal } from "@/components/ShareDocumentModal";
+import { BreadcrumbItem, Document, User } from "@/types";
+import { DocumentContent } from "@/types/crdt";
+import { router, usePage } from "@inertiajs/react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Documents',
-        href: '/documents',
-    },
-];
+import { ArrowLeft, Share } from "lucide-react";
 
 interface EditProps {
     document: Document;
+    initialContent?: string;
 }
 
-export default function Edit({ document }: EditProps) {
+export default function Edit({ document, initialContent = "" }: EditProps) {
+    const { props } = usePage();
+    const user = props.auth?.user as User;
+    console.log('user', user);
     const [title, setTitle] = React.useState(document.title);
-    const [content, setContent] = React.useState("");
     const [isSaving, setIsSaving] = React.useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
 
     const saveDocument = React.useCallback(async (updates: { title?: string; content?: string }) => {
         if (isSaving) return;
-        
+
         setIsSaving(true);
         try {
-            await router.patch(`/documents/${document.id}`, updates, {
+            router.patch(`/documents/${document.id}`, updates, {
                 preserveState: true,
                 preserveScroll: true,
             });
@@ -42,9 +41,8 @@ export default function Edit({ document }: EditProps) {
         saveDocument({ title: newTitle });
     }, [saveDocument]);
 
-    const handleContentChange = React.useCallback((newContent: string) => {
-        setContent(newContent);
-        saveDocument({ content: newContent });
+    const handleContentSave = React.useCallback(async (documentContent: DocumentContent) => {
+        await saveDocument({ content: documentContent.text });
     }, [saveDocument]);
 
     return (
@@ -59,7 +57,7 @@ export default function Edit({ document }: EditProps) {
                     <ArrowLeft className="h-4 w-4" />
                     Back to Documents
                 </Button>
-                
+
                 <div className="flex-1">
                     <input
                         type="text"
@@ -69,19 +67,41 @@ export default function Edit({ document }: EditProps) {
                         placeholder="Untitled Document"
                     />
                 </div>
-                
-                {isSaving && (
-                    <div className="text-sm text-muted-foreground">
-                        Saving...
-                    </div>
-                )}
+
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="flex items-center gap-2"
+                    >
+                        <Share className="h-4 w-4" />
+                        Share
+                    </Button>
+
+                    {isSaving && (
+                        <div className="text-sm text-muted-foreground">
+                            Saving...
+                        </div>
+                    )}
+                </div>
             </div>
 
-            <TextEditor
-                defaultValue={content}
-                onChange={handleContentChange}
+            <CollaborativeTextEditor
+                documentId={document.id.toString()}
+                userId={user.id.toString()}
+                userName={user.name}
+                initialContent={initialContent}
+                onSave={handleContentSave}
                 placeholder="Start writing your document..."
                 className="min-h-[600px]"
+            />
+
+            <ShareDocumentModal
+                open={isShareModalOpen}
+                onOpenChange={setIsShareModalOpen}
+                documentId={document.id}
+                documentTitle={document.title}
             />
         </div>
     );

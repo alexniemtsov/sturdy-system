@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property int $id
@@ -40,5 +42,47 @@ class Document extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function shares(): HasMany
+    {
+        return $this->hasMany(DocumentShare::class);
+    }
+
+    public function sharedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'document_shares')
+            ->withPivot(['permission', 'shared_by', 'shared_at'])
+            ->withTimestamps();
+    }
+
+    public function isOwnedBy(User $user): bool
+    {
+        return $this->user_id === $user->id;
+    }
+
+    public function isSharedWith(User $user): bool
+    {
+        return $this->shares()->where('user_id', $user->id)->exists();
+    }
+
+    public function getPermissionFor(User $user): ?string
+    {
+        if ($this->isOwnedBy($user)) {
+            return 'write';
+        }
+
+        $share = $this->shares()->where('user_id', $user->id)->first();
+        return $share?->permission;
+    }
+
+    public function canBeEditedBy(User $user): bool
+    {
+        return $this->getPermissionFor($user) === 'write';
+    }
+
+    public function canBeViewedBy(User $user): bool
+    {
+        return in_array($this->getPermissionFor($user), ['read', 'write']);
     }
 }

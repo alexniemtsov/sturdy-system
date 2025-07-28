@@ -21,7 +21,7 @@ class DocumentPolicy
      */
     public function view(User $user, Document $document): bool
     {
-        return $user->id === $document->user_id;
+        return $document->canBeViewedBy($user);
     }
 
     /**
@@ -37,7 +37,7 @@ class DocumentPolicy
      */
     public function update(User $user, Document $document): bool
     {
-        return $user->id === $document->user_id;
+        return $document->canBeEditedBy($user);
     }
 
     /**
@@ -45,7 +45,15 @@ class DocumentPolicy
      */
     public function delete(User $user, Document $document): bool
     {
-        return $user->id === $document->user_id;
+        return $document->isOwnedBy($user);
+    }
+
+    /**
+     * Determine whether the user can share the model.
+     */
+    public function share(User $user, Document $document): bool
+    {
+        return $document->isOwnedBy($user);
     }
 
     /**
