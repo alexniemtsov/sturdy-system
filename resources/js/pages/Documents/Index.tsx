@@ -1,44 +1,49 @@
-import CreateFileIcon from '@/components/ui/create-file-icon';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { FilePenLine } from 'lucide-react';
+import { type BreadcrumbItem, Document } from '@/types';
+import { Head, router } from '@inertiajs/react';
+import { FilePenLine, FilePlus } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Documents',
-        href: '/dashboard',
+        href: '/documents',
     },
 ];
-
-interface Document {
-    id: number,
-    title: string,
-    storage_path: string
-}
 
 interface IndexProps {
     documents: Document[]
 }
 
 export default function Index({ documents }: IndexProps) {
+    const handleCreateDocument = () => {
+        router.post('/documents');
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
-            {documents.map((doc: Document) => {
-                return <div>
-                    <p>{doc.id}</p>
-                    <p>{doc.id}</p>
-                    <p>{doc.id}</p></div>;
-            })}
+            <Head title="Documents" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
-
                 <div className="grid auto-rows-min gap-4 md:grid-cols-3 ">
-                    <div className="cursor-pointer hover:bg-gray-800 flex flex-col items-center justify-center aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border text-center">
-                        <FilePenLine className="w-16 h-16" size={48} color="#ffffff" absoluteStrokeWidth />
-                        <span className="mt-1 font-semibold tracking-tight">CREATE</span>
+                    <div
+                        onClick={handleCreateDocument}
+                        className="cursor-pointer hover:bg-gray-800 flex flex-col items-center justify-center aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border text-center transition-colors"
+                    >
+                        <FilePlus className="w-16 h-16" size={48} color="#ffffff" absoluteStrokeWidth />
                     </div>
+
+                    {documents.map((doc: Document) => (
+                        <div
+                            key={doc.id}
+                            onClick={() => router.visit(`/documents/${doc.id}/edit`)}
+                            className="cursor-pointer hover:bg-gray-800 flex flex-col items-center justify-center aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border text-center transition-colors p-4"
+                        >
+                            <FilePenLine className="w-12 h-12 mb-2" color="#ffffff" />
+                            <span className="font-semibold tracking-tight truncate w-full">{doc.title}</span>
+                            <span className="text-sm text-muted-foreground mt-1">
+                                {new Date(doc.updated_at).toLocaleDateString()}
+                            </span>
+                        </div>
+                    ))}
                 </div>
                 {/* <div className="grid auto-rows-min gap-4 md:grid-cols-3"> */}
                 {/*     <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"> */}

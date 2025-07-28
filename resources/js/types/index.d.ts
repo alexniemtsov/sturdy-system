@@ -41,3 +41,12 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface Document {
+    id: number,
+    title: string,
+    storage_path: string,
+    user_id: number,
+    created_at: string,
+    updated_at: string
+}

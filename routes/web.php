@@ -9,17 +9,11 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    /* Route::get('dashboard', function () { */
-    /*     return Inertia::render('dashboard'); */
-    /* })->name('dashboard'); */
+    Route::get('dashboard', function () {
+        return Inertia::render('dashboard');
+    })->name('dashboard');
 
-    Route::get('dashboard', [DocumentController::class, 'index'])
-        ->name('dashboard');
-
-    Route::get(
-        'docs/{document}',
-        [DocumentController::class, 'show']
-    )->name('document.show');
+    Route::resource('documents', DocumentController::class);
 });
 
 require __DIR__.'/settings.php';
